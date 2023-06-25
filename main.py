@@ -54,16 +54,22 @@ session.add_all([sale_1, sale_2, sale_3, sale_4, sale_5, sale_6, sale_7, sale_8,
 session.commit()
 session.close()
 
-q = session.query(Publisher).filter(Publisher.name == input("Введите название издателя "))
-for s in q.all():
-    print(s.id, s.name)
 
 
-q = session.query(Publisher).filter(Publisher.id == input("Введите идентификатор (id) издателя "))
-for s in q.all():
-    print(s.id, s.name)
+pub_name = input('Название издательства: ')
+pub_id = input('Идентификатор издательства: ')
+def get_shop_by_publisher(publisher_name=None, publisher_id=None):
+    if publisher_id is not None and publisher_name is None:
+        for c in session.query(Shop.name).join(Stock.shop).join(Stock.book).join(Book.publisher).filter(Publisher.id == int(publisher_id)):
+            print(c)
+    elif publisher_name is not None and publisher_id is None:
+        for c in session.query(Shop.name).join(Stock.shop).join(Stock.book).join(Book.publisher).filter(Publisher.name == publisher_name):
+            print(c)
+    elif publisher_name is not None and publisher_id is not None:
+        for c in session.query(Shop.name).join(Stock.shop).join(Stock.book).join(Book.publisher).filter(Publisher.name == publisher_name, Publisher.id == int(publisher_id)):
+            print(c)
 
-
-subq = session.query(Shop).all()
-for s in subq:
-    print(s.id, s.name)
+if __name__ == '__main__':
+    #get_shop_by_publisher(publisher_name=pub_name)
+    get_shop_by_publisher(publisher_id=pub_id)
+    #get_shop_by_publisher(publisher_id=pub_id, publisher_name=pub_name)
