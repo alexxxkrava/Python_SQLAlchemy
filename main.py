@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 
 from code import create_tables, Publisher, Shop, Sale, Stock, Book
 
-DSN = ''
+DSN = 'postgresql://postgres:alex1994krava@localhost:5432/al_test_db'
 engine = sq.create_engine(DSN)
 create_tables(engine)
 
@@ -15,11 +15,13 @@ publisher_2 = Publisher(name="Дж. Роллинг")
 publisher_3 = Publisher(name="Д. Глуховский")
 publisher_4 = Publisher(name="Дж. Мартин")
 session.add_all([publisher_1, publisher_2, publisher_3, publisher_4])
+session.commit()
 
 shop_1 = Shop(name="Книжный дом")
 shop_2 = Shop(name="Буквоед")
 shop_3 = Shop(name="Лабиринт")
 session.add_all([shop_1, shop_2, shop_3])
+session.commit()
 
 book_1 = Book(title="Капитанская дочка", id_publisher=1)
 book_2 = Book(title="Евгений Онегин", id_publisher=1)
@@ -28,6 +30,7 @@ book_4 = Book(title="Гарри Поттер и тайная комната", id
 book_5 = Book(title="Метро", id_publisher=3)
 book_6 = Book(title="Песнь льда и пламени", id_publisher=4)
 session.add_all([book_1, book_2, book_3, book_4, book_5, book_6])
+session.commit()
 
 stock_1 = Stock(id_shop=1, id_book=1, count=500)
 stock_2 = Stock(id_shop=1, id_book=2, count=600)
@@ -39,6 +42,7 @@ stock_7 = Stock(id_shop=3, id_book=1, count=200)
 stock_8 = Stock(id_shop=3, id_book=2, count=300)
 stock_9 = Stock(id_shop=3, id_book=3, count=400)
 session.add_all([stock_1, stock_2, stock_3, stock_4, stock_5, stock_6, stock_7, stock_8, stock_9])
+session.commit()
 
 sale_1 = Sale(price=1000.99, date_sale="2022-06-23", id_stock=1, count=10)
 sale_2 = Sale(price=1200.99, date_sale="2022-06-22", id_stock=2, count=20)
@@ -54,22 +58,16 @@ session.add_all([sale_1, sale_2, sale_3, sale_4, sale_5, sale_6, sale_7, sale_8,
 session.commit()
 session.close()
 
+def get_shops(pub_name):
+    res = session.query(Book.title, Shop.name, Sale.price, Sale.date_sale).select_from(Book).join(Publisher).join(Stock).join(Shop).join(Sale)
+    if pub_name.isdigit():
+        result = res.filter(Publisher.id == pub_name).all()
+    else:
+        result = res.filter(Publisher.name.like(f'%{pub_name}%')).all()
+    for a,b,c,d in result:
+        print(f'Название книги: {a} | Магазин: {b} | Цена: {c} | Дата продажи: {d.strftime("%d-%m-%Y")}')
 
-
-pub_name = input('Название издательства: ')
-pub_id = input('Идентификатор издательства: ')
-def get_shop_by_publisher(publisher_name=None, publisher_id=None):
-    if publisher_id is not None and publisher_name is None:
-        for c in session.query(Shop.name).join(Stock.shop).join(Stock.book).join(Book.publisher).filter(Publisher.id == int(publisher_id)):
-            print(c)
-    elif publisher_name is not None and publisher_id is None:
-        for c in session.query(Shop.name).join(Stock.shop).join(Stock.book).join(Book.publisher).filter(Publisher.name == publisher_name):
-            print(c)
-    elif publisher_name is not None and publisher_id is not None:
-        for c in session.query(Shop.name).join(Stock.shop).join(Stock.book).join(Book.publisher).filter(Publisher.name == publisher_name, Publisher.id == int(publisher_id)):
-            print(c)
 
 if __name__ == '__main__':
-    #get_shop_by_publisher(publisher_name=pub_name)
-    get_shop_by_publisher(publisher_id=pub_id)
-    #get_shop_by_publisher(publisher_id=pub_id, publisher_name=pub_name)
+    pub_name = input("Введите имя или id: ")
+    get_shops(pub_name)
